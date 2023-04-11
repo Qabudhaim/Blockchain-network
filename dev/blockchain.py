@@ -42,21 +42,20 @@ class Blockchain:
         return new_transaction
     
     @staticmethod
-    def hash_block(block, nonce):
-        block_string = json.dumps(block, sort_keys=True)
-        data = block_string + str(nonce)
-        block_hash = hashlib.sha256(data.encode()).hexdigest()
+    def hash_block(block_data, previous_hash, nonce):
+        block_string = json.dumps(block_data, sort_keys=True)
+        data = block_string + previous_hash + str(nonce)
+        hash = hashlib.sha256(data.encode()).hexdigest()
 
-        return block_hash
+        return hash
     
-    def proof_of_work(self, block):
+    def proof_of_work(self, block_data, previous_hash):
         nonce = 0
-        block_hash = self.hash_block(block, nonce)
-        while(self.proof_is_valid(block_hash) is False):
+        hash = self.hash_block(block_data, previous_hash, nonce)
+        while(self.proof_is_valid(hash) is False):
             nonce += 1
-            block_hash = self.hash_block(block, nonce)
+            hash = self.hash_block(block_data, previous_hash, nonce)
 
-        print(block_hash)
         return nonce
 
     @property
@@ -70,8 +69,8 @@ class Blockchain:
         return self.chain[0]
 
     @staticmethod
-    def proof_is_valid(block_hash):
-        return block_hash[:4] == "0000"
+    def proof_is_valid(hash):
+        return hash[:4] == "0000"
     
     # def register_node(self, address):
     #     # Add a new node to the list of nodes

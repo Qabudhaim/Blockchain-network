@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from blockchain import Blockchain
 from fastapi.encoders import jsonable_encoder
-from typing import Dict
+from typing import Dict, Union
 
 app = FastAPI()
 blockchain = Blockchain()
@@ -12,12 +12,38 @@ async def root():
 
 @app.get("/blockchain")
 async def get_blockchain():
-    blockchain_json = jsonable_encoder(blockchain)
-    return blockchain_json
+    return jsonable_encoder(blockchain)
+
+@app.post("/add_transaction")
+def create_transaction(data: Dict[str, Union[int, str]]):
+    sender = data.get("sender")
+    recipient = data.get("recipient")
+    amount = data.get("amount")
+    if sender is None or recipient is None or amount is None:
+        return {"error": "Missing values"}
+
+    new_transaction = blockchain.create_new_transaction(sender, recipient, amount)
+    return new_transaction
 
 @app.get("/mine")
 async def mine():
-    block = blockchain.create_new_block(nonce = 200, hash = '00', previous_hash ='00')
+    last_block = blockchain.last_block
+    previous_hash = last_block['hash']
+    block_data = {
+        'transactions': blockchain.pending_transactions,
+        'index': len(blockchain.chain) + 1,
+    }
+    nonce = blockchain.proof_of_work(block_data, previous_hash)
+    hash = blockchain.hash_block(block_data, previous_hash, nonce)
+
+    block = blockchain.create_new_block(nonce = nonce, hash = hash, previous_hash = previous_hash)
+
+    blockchain.pending_transactions.append({
+        "sender": "00000000000000000000000000000000",
+        "recipient": "Node_Address",
+        "amount": 12.5
+    })
+
     block = jsonable_encoder(block)
     result = {
         "Message": "Block was mined successfully",
@@ -25,13 +51,3 @@ async def mine():
     }
     return result
 
-@app.post("/add_transaction")
-def create_transaction(data: Dict[str, str]):
-    sender = data.get("sender")
-    recipient = data.get("recipient")
-    amount = data.get("amount")
-    if sender is None:
-        return {"error": "No sender specified"}
-
-    new_transaction = blockchain.create_new_transaction(sender, recipient, amount)
-    return new_transaction

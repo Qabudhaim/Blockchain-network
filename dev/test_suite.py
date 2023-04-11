@@ -10,9 +10,11 @@ def test_genesis_block():
     
 def test_hash_block():
     blockchain = Blockchain()
-    block = blockchain.last_block
-    block['timestamp'] = 0
-    assert blockchain.hash_block(block, 215711) == '0000858bccdc4c1a8d8288e1a15bf6b55c4c3646f32b86e95e0210e04529a1b5'
+    block_data = {
+        'transactions': blockchain.pending_transactions,
+        'index': len(blockchain.chain) + 1,
+    }
+    assert blockchain.hash_block(block_data, 14401) == '0000858bccdc4c1a8d8288e1a15bf6b55c4c3646f32b86e95e0210e04529a1b5'
 
 def test_proof_of_work():
     blockchain = Blockchain()

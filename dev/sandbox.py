@@ -20,13 +20,18 @@ blockchain.last_block['timestamp'] = 0
 block_string = json.dumps(blockchain.last_block, sort_keys=True)
 print(block_string)
 
+block_data = {
+    'transactions': blockchain.pending_transactions,
+    'index': len(blockchain.chain) + 1,
+}
+
 nonce = 0
-data = block_string + str(nonce)
+data = str(block_data) + str(nonce)
 HashedBlock = hashlib.sha256(data.encode()).hexdigest()
 
 while(HashedBlock[:4] != '0000'):
     nonce += 1
-    data = block_string + str(nonce)
+    data = str(block_data) + str(nonce)
     HashedBlock = hashlib.sha256(data.encode()).hexdigest()
 
     print(HashedBlock)
