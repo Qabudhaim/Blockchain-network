@@ -9,9 +9,9 @@ class Blockchain:
         self.pending_transactions = []
 
         # Create the genesis block
-        self.new_block(nonce = 100, hash = '0', previous_hash ='0')
+        self.create_new_block(nonce = 100, hash = '0', previous_hash ='0')
 
-    def new_block(self, nonce, hash, previous_hash=None):
+    def create_new_block(self, nonce, hash, previous_hash=None):
         # Creates a new Block and adds it to the chain
         block = {
             'index': len(self.chain) + 1,
