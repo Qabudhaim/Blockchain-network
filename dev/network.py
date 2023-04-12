@@ -8,7 +8,7 @@ blockchain = Blockchain()
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to blockchain"}
+    return {"message": f"Node {blockchain.address}"}
 
 @app.get("/blockchain")
 async def get_blockchain():

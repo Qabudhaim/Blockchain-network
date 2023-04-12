@@ -2,12 +2,16 @@ import hashlib
 import json
 from time import time
 import uuid
+import os
 
 class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
-
+	
+        self.address = 'http://localhost:' + os.environ.get("PORT", "8080")
+        self.network_nodes = []
+        
         # Create the genesis block
         self.create_new_block(nonce = 100, hash = '0', previous_hash ='0')
 
