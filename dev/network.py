@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from blockchain import Blockchain
 from fastapi.encoders import jsonable_encoder
 from typing import Dict, Union
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 blockchain = Blockchain()
 
 @app.get("/")
@@ -62,3 +64,10 @@ async def root():
 @app.get("/register-nodes-bulk")
 async def root():
     return {"message": "register-nodes-bulk"}
+    
+@app.get("/test")
+async def index(request: Request):
+    context = {"title": "FastAPI Demo", "message": "Hello, World!"}
+    return templates.TemplateResponse("index.html", {"request": request, **context})
+    
+      
