@@ -8,8 +8,9 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
-	
-        self.address = 'http://localhost:' + os.environ.get("PORT", "8080")
+        self.address = str(uuid.uuid4()).replace('-', ''),
+    
+        self.url = 'http://localhost:' + os.environ.get("PORT", "8080")
         self.network_nodes = []
         
         # Create the genesis block

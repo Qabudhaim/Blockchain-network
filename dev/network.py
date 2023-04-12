@@ -10,7 +10,7 @@ blockchain = Blockchain()
 
 @app.get("/")
 async def root():
-    return {"message": f"Node {blockchain.address}"}
+    return {"message": f"Node {blockchain.url}"}
 
 @app.get("/blockchain")
 async def get_blockchain():
@@ -42,8 +42,8 @@ async def mine():
 
     blockchain.pending_transactions.append({
         "sender": "00000000000000000000000000000000",
-        "recipient": "Node_Address",
-        "amount": 12.5
+        "recipient": blockchain.address,
+        "amount": 5
     })
 
     block = jsonable_encoder(block)
@@ -57,9 +57,14 @@ async def mine():
 async def root():
     return {"message": "register-and-broadcast-node"}
 
-@app.get("/register-node")
-async def root():
-    return {"message": "register-node"}
+@app.post("/register-node")
+async def register_node(data: Dict[str, str]):
+    url = data.get("url")
+    if (url in blockchain.network_nodes or url is blockchain.url):
+        return {"error": "Node already exsist"}
+    
+    blockchain.network_nodes.append(url)
+    return {"Message": "Node added successfuly",}
 
 @app.get("/register-nodes-bulk")
 async def root():
