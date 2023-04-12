@@ -3,6 +3,10 @@ from blockchain import Blockchain
 from fastapi.encoders import jsonable_encoder
 from typing import Dict, Union
 from fastapi.templating import Jinja2Templates
+from time import time
+import uuid
+import httpx
+import asyncio
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -43,7 +47,9 @@ async def mine():
     blockchain.pending_transactions.append({
         "sender": "00000000000000000000000000000000",
         "recipient": blockchain.address,
-        "amount": 5
+        "amount": 5,
+        "timestamp": int(time()),
+        "transaction_id": str(uuid.uuid4()).replace('-', ''),
     })
 
     block = jsonable_encoder(block)
@@ -53,9 +59,20 @@ async def mine():
     }
     return result
 
-@app.get("/register-and-broadcast-node")
-async def root():
-    return {"message": "register-and-broadcast-node"}
+@app.post("/register-and-broadcast-node")
+async def register_and_broadcast_node(data: Dict[str, str]):
+    new_node = data.get("url")
+    if (new_node in blockchain.network_nodes or new_node is blockchain.url):
+        return {"error": "Node already exsist"}
+    
+    blockchain.network_nodes.append(new_node)
+
+    async with httpx.AsyncClient() as client:
+        tasks = [client.post(f"http://localhost:82/register-node", json={"url": new_node}) for node in blockchain.network_nodes]
+        responses = await asyncio.gather(*tasks)
+    return {"message": responses}    
+    
+    # return {"message": "New node registered with network successfully."}
 
 @app.post("/register-node")
 async def register_node(data: Dict[str, str]):
@@ -66,9 +83,15 @@ async def register_node(data: Dict[str, str]):
     blockchain.network_nodes.append(url)
     return {"Message": "Node added successfuly",}
 
-@app.get("/register-nodes-bulk")
-async def root():
-    return {"message": "register-nodes-bulk"}
+@app.post("/register-nodes-bulk")
+async def register_nodes_bulk(data: Dict[str, list]):
+    network_nodes = data.get("network_nodes")
+    for node in network_nodes:
+        if (node in blockchain.network_nodes or node is blockchain.url):
+            return {"error": "Node already exsist"}
+        blockchain.network_nodes.append(node)
+
+    return {"message": "Bulk registration successful."}
     
 @app.get("/test")
 async def index(request: Request):
