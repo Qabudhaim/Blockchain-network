@@ -59,41 +59,32 @@ async def mine():
     }
     return result
 
-async def make_request(url, data):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=data)
-        return response
+
     
 @app.post("/register-and-broadcast-node")
 async def register_and_broadcast_node(data: Dict[str, str]):
     new_node = data.get("url")
-    if (new_node in blockchain.network_nodes or new_node is blockchain.url):
+    if (new_node in blockchain.network_nodes or new_node == blockchain.url):
         return {"error": "Node already exsist"}
-    
+
     blockchain.network_nodes.append(new_node)
-
-    # return (blockchain.network_nodes)
-
-    # async with httpx.AsyncClient() as client:
-    #     for node in blockchain.network_nodes:
-    #         await client.post(f"{node}/register-node", json={"url": new_node})
-    # return {"message": "Done"}    
-    
-    # return {"message": "New node registered with network successfully."}
 
     tasks = []
     for node in blockchain.network_nodes:
-        task = asyncio.create_task(make_request(f"{node}/register-node", data))
+        task = asyncio.create_task(make_request(f"{node}/register-node", {"url": new_node}))
         tasks.append(task)
 
-    results = await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
 
-    return [result.json() for result in results]
+    task = asyncio.create_task(make_request(f"{new_node}/register-nodes-bulk", {"network_nodes": [blockchain.url, *blockchain.network_nodes]}))
+    await asyncio.gather(*tasks)
+
+    return {"message": "Node registered successfully"}
 
 @app.post("/register-node")
 async def register_node(data: Dict[str, str]):
     url = data.get("url")
-    if (url in blockchain.network_nodes or url is blockchain.url):
+    if (url in blockchain.network_nodes or url == blockchain.url):
         return {"error": "Node already exsist"}
     
     blockchain.network_nodes.append(url)
@@ -103,7 +94,7 @@ async def register_node(data: Dict[str, str]):
 async def register_nodes_bulk(data: Dict[str, list]):
     network_nodes = data.get("network_nodes")
     for node in network_nodes:
-        if (node in blockchain.network_nodes or node is blockchain.url):
+        if (node in blockchain.network_nodes or node == blockchain.url):
             return {"error": "Node already exsist"}
         blockchain.network_nodes.append(node)
 
@@ -113,5 +104,8 @@ async def register_nodes_bulk(data: Dict[str, list]):
 async def index(request: Request):
     context = {"title": "FastAPI Demo", "message": "Hello, World!"}
     return templates.TemplateResponse("index.html", {"request": request, **context})
-    
-      
+          
+async def make_request(url, data):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=data)
+        return response
