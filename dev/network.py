@@ -59,6 +59,11 @@ async def mine():
     }
     return result
 
+async def make_request(url, data):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=data)
+        return response
+    
 @app.post("/register-and-broadcast-node")
 async def register_and_broadcast_node(data: Dict[str, str]):
     new_node = data.get("url")
@@ -67,12 +72,23 @@ async def register_and_broadcast_node(data: Dict[str, str]):
     
     blockchain.network_nodes.append(new_node)
 
-    async with httpx.AsyncClient() as client:
-        tasks = [client.post(f"http://localhost:82/register-node", json={"url": new_node}) for node in blockchain.network_nodes]
-        responses = await asyncio.gather(*tasks)
-    return {"message": responses}    
+    # return (blockchain.network_nodes)
+
+    # async with httpx.AsyncClient() as client:
+    #     for node in blockchain.network_nodes:
+    #         await client.post(f"{node}/register-node", json={"url": new_node})
+    # return {"message": "Done"}    
     
     # return {"message": "New node registered with network successfully."}
+
+    tasks = []
+    for node in blockchain.network_nodes:
+        task = asyncio.create_task(make_request(f"{node}/register-node", data))
+        tasks.append(task)
+
+    results = await asyncio.gather(*tasks)
+
+    return [result.json() for result in results]
 
 @app.post("/register-node")
 async def register_node(data: Dict[str, str]):

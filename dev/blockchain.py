@@ -10,7 +10,7 @@ class Blockchain:
         self.pending_transactions = []
         self.address = str(uuid.uuid4()).replace('-', '')
     
-        self.url = 'http://localhost:' + os.environ.get("ADDRESS", "8080")
+        self.url = 'http://172.17.0.1:' + os.environ.get("ADDRESS", "8080")
         self.network_nodes = []
         
         # Create the genesis block
