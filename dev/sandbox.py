@@ -1,43 +1,41 @@
-from blockchain import Blockchain
-import hashlib
-import json
+from pydantic import BaseModel, validator, conlist, constr, conint # Constraint integer
+from time import time
+from enum import Enum
+from typing import Optional
+import uuid
 
-blockchain = Blockchain()
+class Transaction(BaseModel):
+    sender: str
+    recipient: str
+    amount: int
+    timestamp: int
+    transaction_id: str
 
-print(blockchain.genesis_block)
+class Block(BaseModel):
+    index: int
+    timestamp: int
+    transactions: conlist(Transaction, min_items=1)
+    nonce: int
+    previous_hash: str
+    hash: str
 
-print(blockchain.last_block)
+transaction = Transaction(
+    sender="Qusai",
+    recipient="Tareq",
+    amount=100,
+    timestamp=int(time()),
+    transaction_id=str(uuid.uuid4()).replace('-', ''),
+)
 
-blockchain.create_new_transaction('ASDFKLASJFDASDFLKAJSDF', 'ASDFKLASJFDASDFLKAJSDF', 150)
+block = Block(
+    index=1,
+    timestamp=int(time()),
+    transactions=[transaction],
+    nonce=100,
+    previous_hash="0",
+    hash="0",
+)
 
-print(blockchain.pending_transactions)
-print(blockchain.__dict__)
-
-print("********")
-
-blockchain.last_block['timestamp'] = 0
-
-block_string = json.dumps(blockchain.last_block, sort_keys=True)
-print(block_string)
-
-block_data = {
-    'transactions': blockchain.pending_transactions,
-    'index': len(blockchain.chain) + 1,
-}
-
-nonce = 0
-data = str(block_data) + str(nonce)
-HashedBlock = hashlib.sha256(data.encode()).hexdigest()
-
-while(HashedBlock[:4] != '0000'):
-    nonce += 1
-    data = str(block_data) + str(nonce)
-    HashedBlock = hashlib.sha256(data.encode()).hexdigest()
-
-    print(HashedBlock)
-
-print("********")
-print(HashedBlock)
-print(nonce)
-
+print(block.json())
+print(transaction.json())
 

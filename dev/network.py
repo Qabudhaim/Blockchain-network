@@ -3,10 +3,10 @@ from blockchain import Blockchain
 from fastapi.encoders import jsonable_encoder
 from typing import Dict, Union
 from fastapi.templating import Jinja2Templates
-from time import time
 import uuid
 import httpx
 import asyncio
+from pydantic import BaseModel, conlist
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -45,9 +45,8 @@ async def broadcast_transaction(data: Dict[str, Union[int, str]]):
 
     tasks = []
     for node in blockchain.network_nodes:
-        task = asyncio.create_task(make_request(f"{node}/add_transaction", new_transaction))
+        task = asyncio.create_task(make_request(f"{node}/add_transaction", new_transaction.dict()))
         tasks.append(task)
-
     await asyncio.gather(*tasks)
     
     return {"message": f"Transaction created and broadcast successfully"}
@@ -65,13 +64,16 @@ async def mine():
 
     block = blockchain.create_new_block(nonce = nonce, hash = hash, previous_hash = previous_hash)
 
-    blockchain.pending_transactions.append({
-        "sender": "00000000000000000000000000000000",
-        "recipient": blockchain.address,
-        "amount": 5,
-        "timestamp": int(time()),
-        "transaction_id": str(uuid.uuid4()).replace('-', ''),
-    })
+    tasks = []
+    for node in blockchain.network_nodes:
+        task = asyncio.create_task(make_request(f"{node}/receive-new-block", {"block": block.dict()}))
+        tasks.append(task)
+    await asyncio.gather(*tasks)
+
+    transaction = blockchain.create_new_transaction("00000000000000000000000000000000", blockchain.address, 5)
+
+    task = asyncio.create_task(make_request(f"{blockchain.url}/add_transaction/broadcast", transaction.dict()))
+    await asyncio.gather(*tasks)
 
     block = jsonable_encoder(block)
     result = {
@@ -79,6 +81,16 @@ async def mine():
         "Block": block
     }
     return result
+
+@app.post("/receive-new-block")
+async def receive_new_block(data: Dict):
+    new_block = data.get('block')
+    last_block = blockchain.last_block
+    if (last_block['hash'] == new_block['previous_hash'] and last_block['index'] + 1 == new_block['index']):
+        blockchain.chain.append(new_block)
+        blockchain.pending_transactions = []
+        return {"message": "Block accepted"}
+    return {"error": "Block rejected"}
     
 @app.post("/register-and-broadcast-node")
 async def register_and_broadcast_node(data: Dict[str, str]):
@@ -92,7 +104,6 @@ async def register_and_broadcast_node(data: Dict[str, str]):
     for node in blockchain.network_nodes:
         task = asyncio.create_task(make_request(f"{node}/register-node", {"url": new_node}))
         tasks.append(task)
-
     await asyncio.gather(*tasks)
 
     task = asyncio.create_task(make_request(f"{new_node}/register-nodes-bulk", {"network_nodes": [blockchain.url, *blockchain.network_nodes]}))

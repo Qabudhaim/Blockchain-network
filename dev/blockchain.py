@@ -3,6 +3,23 @@ import json
 from time import time
 import uuid
 import os
+from pydantic import BaseModel, conlist
+from typing import Optional
+
+class Transaction(BaseModel):
+    sender: str
+    recipient: str
+    amount: int
+    timestamp: int
+    transaction_id: str
+
+class Block(BaseModel):
+    index: int
+    timestamp: int
+    transactions: Optional[conlist(Transaction)]
+    nonce: int
+    previous_hash: str
+    hash: str
 
 class Blockchain:
     def __init__(self):
@@ -18,35 +35,50 @@ class Blockchain:
 
     def create_new_block(self, nonce, hash, previous_hash=None):
         # Creates a new Block and adds it to the chain
-        block = {
-            'index': len(self.chain) + 1,
-            'timestamp': int(time()),
-            'transactions': self.pending_transactions,
-            'nonce': nonce,
-            'previous_hash': previous_hash,
-            'hash': hash,
-        }
+        block = Block(
+            index=len(self.chain) + 1,
+            timestamp=int(time()),
+            transactions=self.pending_transactions,
+            nonce=nonce,
+            previous_hash=previous_hash,
+            hash=hash,
+        )
+        # block = {
+        #     'index': len(self.chain) + 1,
+        #     'timestamp': int(time()),
+        #     'transactions': self.pending_transactions,
+        #     'nonce': nonce,
+        #     'previous_hash': previous_hash,
+        #     'hash': hash,
+        # }
 
         # Reset the current list of transactions
         self.pending_transactions = []
 
-        self.chain.append(block)
+        self.chain.append(block.dict())
         return block
     
     def create_new_transaction(self, sender, recipient, amount):
         # Adds a new transaction to the list of transactions
-        new_transaction = {
-            'sender': sender,
-            'recipient': recipient,
-            'amount': amount,
-            'timestamp': int(time()),
-            'transaction_id': str(uuid.uuid4()).replace('-', ''),
-        }
+        new_transaction = Transaction(
+            sender=sender,
+            recipient=recipient,
+            amount=amount,
+            timestamp=int(time()),
+            transaction_id=str(uuid.uuid4()).replace('-', ''),
+        )
+        # new_transaction = {
+        #     'sender': sender,
+        #     'recipient': recipient,
+        #     'amount': amount,
+        #     'timestamp': int(time()),
+        #     'transaction_id': str(uuid.uuid4()).replace('-', ''),
+        # }
 
         return new_transaction
     
     def add_transaction_to_pending_transactions(self, transaction):
-        self.pending_transactions.append(transaction)
+        self.pending_transactions.append(transaction.dict())
         return self.last_block['index'] + 1 # Return in which block the transaction will be added
     
     @staticmethod
