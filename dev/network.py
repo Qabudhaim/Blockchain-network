@@ -21,15 +21,36 @@ async def get_blockchain():
     return jsonable_encoder(blockchain)
 
 @app.post("/add_transaction")
-def create_transaction(data: Dict[str, Union[int, str]]):
+async def create_transaction(data: Dict[str, Union[int, str]]):
     sender = data.get("sender")
     recipient = data.get("recipient")
     amount = data.get("amount")
     if sender is None or recipient is None or amount is None:
         return {"error": "Missing values"}
-
+    
     new_transaction = blockchain.create_new_transaction(sender, recipient, amount)
-    return new_transaction
+    block_index = blockchain.add_transaction_to_pending_transactions(new_transaction)
+    return {"message": f"Transaction will be add to block {block_index}"}
+
+@app.post("/add_transaction/broadcast")
+async def broadcast_transaction(data: Dict[str, Union[int, str]]):
+    sender = data.get("sender")
+    recipient = data.get("recipient")
+    amount = data.get("amount")
+    if sender is None or recipient is None or amount is None:
+        return {"error": "Missing values"}
+    
+    new_transaction = blockchain.create_new_transaction(sender, recipient, amount)
+    blockchain.add_transaction_to_pending_transactions(new_transaction)
+
+    tasks = []
+    for node in blockchain.network_nodes:
+        task = asyncio.create_task(make_request(f"{node}/add_transaction", new_transaction))
+        tasks.append(task)
+
+    await asyncio.gather(*tasks)
+    
+    return {"message": f"Transaction created and broadcast successfully"}
 
 @app.get("/mine")
 async def mine():
@@ -58,8 +79,6 @@ async def mine():
         "Block": block
     }
     return result
-
-
     
 @app.post("/register-and-broadcast-node")
 async def register_and_broadcast_node(data: Dict[str, str]):

@@ -43,8 +43,11 @@ class Blockchain:
             'transaction_id': str(uuid.uuid4()).replace('-', ''),
         }
 
-        self.pending_transactions.append(new_transaction)
         return new_transaction
+    
+    def add_transaction_to_pending_transactions(self, transaction):
+        self.pending_transactions.append(transaction)
+        return self.last_block['index'] + 1 # Return in which block the transaction will be added
     
     @staticmethod
     def hash_block(block_data, previous_hash, nonce):
