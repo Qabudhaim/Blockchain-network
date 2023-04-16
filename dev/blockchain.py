@@ -58,14 +58,14 @@ class Blockchain:
         self.chain.append(block.dict())
         return block
     
-    def create_new_transaction(self, sender, recipient, amount):
+    def create_new_transaction(self, sender, recipient, amount, timestamp=None, transaction_id=None):
         # Adds a new transaction to the list of transactions
         new_transaction = Transaction(
             sender=sender,
             recipient=recipient,
             amount=amount,
-            timestamp=int(time()),
-            transaction_id=str(uuid.uuid4()).replace('-', ''),
+            timestamp= timestamp or int(time()),
+            transaction_id= transaction_id or str(uuid.uuid4()).replace('-', ''),
         )
         # new_transaction = {
         #     'sender': sender,
@@ -97,6 +97,65 @@ class Blockchain:
             hash = self.hash_block(block_data, previous_hash, nonce)
 
         return nonce
+    
+    def chain_is_valid(self, chain):
+        valid_chain = True
+
+        # Check if the genesis block is correct
+        genesis_block = chain[0]
+        correct_nonce = genesis_block['nonce'] == 100
+        correct_previous_hash = genesis_block['previous_hash'] == "0"
+        correct_hash = genesis_block['hash'] == "0"
+        correct_transactions = genesis_block['transactions'] == []
+
+        if (not correct_nonce or not correct_previous_hash or not correct_hash or not correct_transactions):
+            valid_chain = False
+        
+        # Check if the hash of the block is correct
+        for i in range(1, len(chain)):
+            current_block = chain[i]
+            previous_block = chain[i-1]
+            block_hash = self.hash_block(
+                {'transactions': current_block['transactions'], 'index': current_block['index']}, 
+                previous_block['hash'], 
+                current_block['nonce']
+                )
+               
+            if block_hash[:4] != "0000":
+                valid_chain = False
+                break
+            
+            if current_block['previous_hash'] != previous_block['hash']:
+                valid_chain = False
+                break
+            
+        return valid_chain
+
+    def get_block(self, block_hash):
+        # Search for the block with the given hash
+        # Returns None if no block is found
+        for block in self.chain:
+            if block['hash'] == block_hash:
+                return block
+        return None
+    
+    def get_transaction(self, transaction_id):
+        # Search for the transaction with the given id
+        # Returns None if no transaction is found
+        for block in self.chain:
+            for transaction in block['transactions']:
+                if transaction['transaction_id'] == transaction_id:
+                    return transaction
+        return None
+    
+    def get_address(self, address):
+        address_transactions = []
+        for block in self.chain:
+            for transaction in block['transactions']:
+                if transaction['recipient'] == address or transaction['sender'] == address:
+                    address_transactions.append(transaction)
+        
+        return address_transactions
 
     @property
     def last_block(self):
@@ -111,60 +170,3 @@ class Blockchain:
     @staticmethod
     def proof_is_valid(hash):
         return hash[:4] == "0000"
-    
-    # def register_node(self, address):
-    #     # Add a new node to the list of nodes
-    #     parsed_url = urlparse(address)
-    #     self.nodes.add(parsed_url.netloc)
-
-    # def valid_chain(self, chain):
-    #     # Determine if a given blockchain is valid
-    #     last_block = chain[0]
-    #     current_index = 1
-
-    #     while current_index < len(chain):
-    #         block = chain[current_index]
-    #         print(f'{last_block}')
-    #         print(f'{block}')
-    #         print("-----------")
-    #         # Check that the hash of the block is correct
-    #         if block['previous_hash'] != self.hash(last_block):
-    #             return False
-
-    #         # Check that the Proof of Work is correct
-    #         if not self.valid_proof(last_block['proof'], block['proof']):
-    #             return False
-
-    #         last_block = block
-    #         current_index += 1
-
-    #     return True
-    
-    # def resolve_conflicts(self):
-    #     # This is our Consensus Algorithm, it resolves conflicts
-    #     # by replacing our chain with the longest one in the network.
-    #     neighbours = self.nodes
-    #     new_chain = None
-
-    #     # We're only looking for chains longer than ours
-    #     max_length = len(self.chain)
-
-    #     # Grab and verify the chains from all the nodes in our network
-    #     for node in neighbours:
-    #         response = requests.get(f'http://{node}/chain')
-
-    #         if response.status_code == 200:
-    #             length = response.json()['length']
-    #             chain = response.json()['chain']
-
-    #             # Check if the length is longer and the chain is valid
-    #             if length > max_length and self.valid_chain(chain):
-    #                 max_length = length
-    #                 new_chain = chain
-
-    #     # Replace our chain if we discovered a new, valid chain longer than ours
-    #     if new_chain:
-    #         self.chain = new_chain
-    #         return True
-
-    #     return False

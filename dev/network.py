@@ -21,14 +21,12 @@ async def get_blockchain():
     return jsonable_encoder(blockchain)
 
 @app.post("/add_transaction")
-async def create_transaction(data: Dict[str, Union[int, str]]):
-    sender = data.get("sender")
-    recipient = data.get("recipient")
-    amount = data.get("amount")
-    if sender is None or recipient is None or amount is None:
+async def create_transaction(data: Dict):
+    new_transaction = data.get("transaction")
+    if new_transaction['sender'] is None or new_transaction['recipient'] is None or new_transaction['amount'] is None:
         return {"error": "Missing values"}
-    
-    new_transaction = blockchain.create_new_transaction(sender, recipient, amount)
+
+    new_transaction = blockchain.create_new_transaction(**new_transaction)
     block_index = blockchain.add_transaction_to_pending_transactions(new_transaction)
     return {"message": f"Transaction will be add to block {block_index}"}
 
@@ -45,7 +43,7 @@ async def broadcast_transaction(data: Dict[str, Union[int, str]]):
 
     tasks = []
     for node in blockchain.network_nodes:
-        task = asyncio.create_task(make_request(f"{node}/add_transaction", new_transaction.dict()))
+        task = asyncio.create_task(make_request(f"{node}/add_transaction", {'transaction': new_transaction.dict()}))
         tasks.append(task)
     await asyncio.gather(*tasks)
     
@@ -70,7 +68,7 @@ async def mine():
         tasks.append(task)
     await asyncio.gather(*tasks)
 
-    transaction = blockchain.create_new_transaction("00000000000000000000000000000000", blockchain.address, 5)
+    transaction = blockchain.create_new_transaction("10000000000000000000000000000001", blockchain.address, 5)
 
     task = asyncio.create_task(make_request(f"{blockchain.url}/add_transaction/broadcast", transaction.dict()))
     await asyncio.gather(*tasks)
@@ -129,13 +127,65 @@ async def register_nodes_bulk(data: Dict[str, list]):
         blockchain.network_nodes.append(node)
 
     return {"message": "Bulk registration successful."}
+
+@app.get("/consensus")
+async def consensus():
+    tasks = []
+    for node in blockchain.network_nodes:
+        task = asyncio.create_task(make_request(f"{node}/blockchain", requst_type="GET"))
+        tasks.append(task)
+    responses = await asyncio.gather(*tasks)
+
+    # return {'responses': [response.json() for response in responses]}
+
+    max_length = len(blockchain.chain)
+    new_chain = None
+    pending_transactions = []
+
+    for response in responses:
+        chain = response.json().get("chain")
+        length = len(chain)
+        if (length > max_length and blockchain.chain_is_valid(chain)):
+            max_length = length
+            new_chain = chain
+            pending_transactions = response.json().get("pending_transactions")
+
+    if new_chain:
+        blockchain.chain = new_chain
+        blockchain.pending_transactions = pending_transactions
+        return {"message": "Chain replaced", "new_chain": blockchain.chain}
+    return {"message": "Chain is authoritative", "chain": blockchain.chain}
     
+@app.get("/search_block/{block_hash}")
+async def search_block(request: Request):
+    block = blockchain.get_block(block_hash=request.path_params["block_hash"])
+    if block:
+        return {"block": block}
+    return {"error": "Block not found"}
+
+@app.get("/search_transaction/{transaction_id}")
+async def search_transaction(request: Request):
+    transaction = blockchain.get_transaction(transaction_id=request.path_params["transaction_id"])
+    if transaction:
+        return {"transaction": transaction}
+    return {"error": "Transaction not found"}
+
+@app.get("/search_address/{address}")
+async def search_address(request: Request):
+    transactions = blockchain.get_address(address=request.path_params["address"])
+    if transactions:
+        return {"transactions": transactions}
+    return {"error": "Address not found"}
+
 @app.get("/test")
 async def index(request: Request):
     context = {"title": "FastAPI Demo", "message": "Hello, World!"}
     return templates.TemplateResponse("index.html", {"request": request, **context})
           
-async def make_request(url, data):
+async def make_request(url, data={}, requst_type="POST"):
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=data)
+        if requst_type == "GET":
+            response = await client.get(url)
+        else:
+            response = await client.post(url, json=data)
         return response
