@@ -25,7 +25,7 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
-        self.address = str(uuid.uuid4()).replace('-', '')
+        self.node_address = str(uuid.uuid4()).replace('-', '')
     
         self.url = 'http://172.17.0.1:' + os.environ.get("ADDRESS", "8080")
         self.network_nodes = []

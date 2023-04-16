@@ -3,7 +3,6 @@ from blockchain import Blockchain
 from fastapi.encoders import jsonable_encoder
 from typing import Dict, Union
 from fastapi.templating import Jinja2Templates
-import uuid
 import httpx
 import asyncio
 from pydantic import BaseModel, conlist
@@ -68,7 +67,7 @@ async def mine():
         tasks.append(task)
     await asyncio.gather(*tasks)
 
-    transaction = blockchain.create_new_transaction("10000000000000000000000000000001", blockchain.address, 5)
+    transaction = blockchain.create_new_transaction("10000000000000000000000000000001", blockchain.node_address, 5)
 
     task = asyncio.create_task(make_request(f"{blockchain.url}/add_transaction/broadcast", transaction.dict()))
     await asyncio.gather(*tasks)
@@ -174,12 +173,18 @@ async def search_transaction(request: Request):
 async def search_address(request: Request):
     transactions = blockchain.get_address(address=request.path_params["address"])
     if transactions:
-        return {"transactions": transactions}
+        balance = 0
+        for transaction in transactions:
+            if transaction["sender"] == request.path_params["address"]:
+                balance -= transaction["amount"]
+            else:
+                balance += transaction["amount"]
+        return {"transactions": transactions, "balance": balance}
     return {"error": "Address not found"}
 
-@app.get("/test")
-async def index(request: Request):
-    context = {"title": "FastAPI Demo", "message": "Hello, World!"}
+@app.get("/explore")
+async def index(request: Request):        
+    context = {"title": "Blockchain", "chain": blockchain.chain}
     return templates.TemplateResponse("index.html", {"request": request, **context})
           
 async def make_request(url, data={}, requst_type="POST"):
