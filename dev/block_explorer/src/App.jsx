@@ -36,7 +36,7 @@ function App() {
 
 
   return (
-<>
+<div className="p-4">
       <h1>Explorer</h1>
       <div>
         <input onChange={handleInputChange} onKeyDown={handleKeyPress}></input>
@@ -67,10 +67,10 @@ function App() {
         <p>You selected: {selectedOption}</p>
       </div>
 
-      <div>      
+      <div className="mt-2">      
         { JSON.stringify(data) === '{}' ? <p>No Data available</p> : <p>{JSON.stringify(data)}</p> }
       </div>
-    </>
+    </div>
 
   )
 }
