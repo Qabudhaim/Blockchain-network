@@ -36,7 +36,7 @@ function App() {
 
 
   return (
-<div className="p-4">
+    <div className="p-4 h-full w-full">
       <h1>Explorer</h1>
       <div>
         <input onChange={handleInputChange} onKeyDown={handleKeyPress}></input>
