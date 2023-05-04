@@ -5,7 +5,7 @@ function App() {
   const submitButtonRef = useRef(null);
 
   const [data, setData] = useState([])
-  const [selectedOption, setSelectedOption] = useState('users');
+  const [selectedOption, setSelectedOption] = useState('block');
   const [buttonClicked, setButtonClicked] = useState(false);
   const [inputValue, setInputValue] = useState('1');
 
@@ -28,7 +28,7 @@ function App() {
   };
 
   useEffect(() => {
-    fetch(`https://jsonplaceholder.typicode.com/${selectedOption}/${inputValue}`)
+    fetch(`http://localhost:86/blockchain`)
     .then(response => response.json())
     .then(json => setData(json))
     .then(setButtonClicked(false))
@@ -47,8 +47,8 @@ function App() {
         <form>
           <div>
             <label>
-              <input type="radio" value="users" checked={selectedOption === 'users'} onChange={handleOptionChange} />
-              users
+              <input type="radio" value="block" checked={selectedOption === 'block'} onChange={handleOptionChange} />
+              block
             </label>
           </div>
           <div>
@@ -68,7 +68,7 @@ function App() {
       </div>
 
       <div className="mt-2">      
-        { JSON.stringify(data) === '{}' ? <p>No Data available</p> : <p>{JSON.stringify(data)}</p> }
+        { JSON.stringify(data) === '{}' ? <p>No Data available</p> : <p>{JSON.stringify(data.pending_transactions)}</p> }
       </div>
     </div>
 

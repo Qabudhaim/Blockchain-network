@@ -6,8 +6,19 @@ from fastapi.templating import Jinja2Templates
 import httpx
 import asyncio
 from pydantic import BaseModel, conlist
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'], # Set this to the appropriate origin URL for your app
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
 templates = Jinja2Templates(directory="templates")
 blockchain = Blockchain()
 
