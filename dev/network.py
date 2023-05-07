@@ -26,7 +26,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# templates = Jinja2Templates(directory="block_explorer/dist")
 blockchain = Blockchain()
 
 
