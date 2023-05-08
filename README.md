@@ -37,9 +37,9 @@ I will assume the port number is 81.
 
     ```json
     {
-        "sender": "b9c67db94d7d4d339a577d9427869e5c", // Sender's address
-        "recipient": "e034d9cc327b4fcdae8f3ed30442f04d", // Recipient's address
-        "amount": 5 // Amount of coins to be transferred
+        "sender": "b9c67db94d7d4d339a577d9427869e5c", 
+        "recipient": "e034d9cc327b4fcdae8f3ed30442f04d",
+        "amount": 5
     }
     ```
 
@@ -71,7 +71,7 @@ I will assume the port number is 81.
     Transactions can be explored by searching for the transaction id.
     And addresses can be explored by searching for the address, where all the transactions related to that address will be displayed in addition to address's balance.
 
-## API list
+## APIs list
 
 FastAPI provides a Swagger UI for the API documentation, you can access it by navigating to http://localhost:81/docs
 
