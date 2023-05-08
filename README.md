@@ -19,9 +19,9 @@ The default ip range for Docker network is 172.17.0.0/16, run ipconfig(Windows)/
 `sudo docker build -t blockchain .`
 
 3. Run Docker containers
-`sudo docker run --env ADDRESS=81 --network=blockchain_network -p 81:80 blockchain
-`
-**NOTE:** Make sure ADDRESS and port number are the same.
+`sudo docker run --env ADDRESS=81 --network=blockchain_network -p 81:80 blockchain`
+
+    **NOTE:** Make sure ADDRESS and port number are the same.
 
 4. Open your browser and go to http://localhost:81
 
