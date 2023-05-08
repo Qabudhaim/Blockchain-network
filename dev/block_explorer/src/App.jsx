@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Block from './Block'
 import Transaction from './Transaction'
 import Address from './Address'
@@ -19,7 +19,7 @@ function App() {
     }
   };
 
-    useLayoutEffect(() => {
+  useEffect(() => {
       const fetchData = async () => {
         try {
           setIsLoading(true);
@@ -27,7 +27,6 @@ function App() {
           const jsonData = await response.json();
           setData(jsonData);
           setIsLoading(false);
-          console.log(import.meta.env.VITE_APP_ADDRESS);
         } catch (error) {
           console.error('Error fetching data:', error);
         }
@@ -83,43 +82,5 @@ function App() {
 
     )
 }
-{/* 
-    <div classNameName="p-4 h-full w-full">
-      <h1>Explorer</h1>
-      <div>
-        <input onChange={handleInputChange} onKeyDown={handleKeyPress}></input>
-        <button ref={submitButtonRef} onClick={handleButtonClick}>Filter</button>
-      </div>
-
-      <div>
-        <form>
-          <div>
-            <label>
-              <input type="radio" value="block" checked={selectedOption === 'block'} onChange={handleOptionChange} />
-              block
-            </label>
-          </div>
-          <div>
-            <label>
-              <input type="radio" value="posts" checked={selectedOption === 'posts'} onChange={handleOptionChange} />
-              posts
-            </label>
-          </div>
-          <div>
-            <label>
-              <input type="radio" value="comments" checked={selectedOption === 'comments'} onChange={handleOptionChange} />
-              comments
-            </label>
-          </div>
-        </form>
-        <p>You selected: {selectedOption}</p>
-      </div>
-
-      <div classNameName="mt-2">      
-        { JSON.stringify(data) === '{}' ? <p>No Data available</p> : <p>{JSON.stringify(data.pending_transactions)}</p> }
-      </div>
-    </div> */}
-
-
 
 export default App

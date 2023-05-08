@@ -43,14 +43,6 @@ class Blockchain:
             previous_hash=previous_hash,
             hash=hash,
         )
-        # block = {
-        #     'index': len(self.chain) + 1,
-        #     'timestamp': int(time()),
-        #     'transactions': self.pending_transactions,
-        #     'nonce': nonce,
-        #     'previous_hash': previous_hash,
-        #     'hash': hash,
-        # }
 
         # Reset the current list of transactions
         self.pending_transactions = []
@@ -67,13 +59,6 @@ class Blockchain:
             timestamp= timestamp or int(time()),
             transaction_id= transaction_id or str(uuid.uuid4()).replace('-', ''),
         )
-        # new_transaction = {
-        #     'sender': sender,
-        #     'recipient': recipient,
-        #     'amount': amount,
-        #     'timestamp': int(time()),
-        #     'transaction_id': str(uuid.uuid4()).replace('-', ''),
-        # }
 
         return new_transaction
     
